@@ -6,43 +6,59 @@
 #include <logging.h>
 #include <test/util/setup_common.h>
 
+#include <functional>
+#include <vector>
+
+// All but 2 of the benchmarks should have roughly similar performance:
+//
+// LogWithoutDebug should be ~3 orders of magnitude faster, as nothing is logged.
+//
+// LogWithoutWriteToFile should be ~2 orders of magnitude faster, as it avoids disk writes.
 
 static void Logging(benchmark::Bench& bench, const std::vector<const char*>& extra_args, const std::function<void()>& log)
 {
+    // Reset any enabled logging categories from a previous benchmark run.
+    LogInstance().DisableCategory(BCLog::LogFlags::ALL);
+
     TestingSetup test_setup{
-        CBaseChainParams::REGTEST,
-        extra_args,
+        ChainType::REGTEST,
+        {.extra_args = extra_args},
     };
 
     bench.run([&] { log(); });
 }
 
-static void LoggingYoThreadNames(benchmark::Bench& bench)
+static void LogWithDebug(benchmark::Bench& bench)
 {
-    Logging(bench, {"-logthreadnames=1"}, [] { LogPrintf("%s\n", "test"); });
+    Logging(bench, {"-logthreadnames=0", "-debug=net"}, [] { LogDebug(BCLog::NET, "%s\n", "test"); });
 }
-static void LoggingNoThreadNames(benchmark::Bench& bench)
+
+static void LogWithoutDebug(benchmark::Bench& bench)
 {
-    Logging(bench, {"-logthreadnames=0"}, [] { LogPrintf("%s\n", "test"); });
+    Logging(bench, {"-logthreadnames=0", "-debug=0"}, [] { LogDebug(BCLog::NET, "%s\n", "test"); });
 }
-static void LoggingYoCategory(benchmark::Bench& bench)
+
+static void LogWithThreadNames(benchmark::Bench& bench)
 {
-    Logging(bench, {"-logthreadnames=0", "-debug=net"}, [] { LogPrint(BCLog::NET, "%s\n", "test"); });
+    Logging(bench, {"-logthreadnames=1"}, [] { LogInfo("%s\n", "test"); });
 }
-static void LoggingNoCategory(benchmark::Bench& bench)
+
+static void LogWithoutThreadNames(benchmark::Bench& bench)
 {
-    Logging(bench, {"-logthreadnames=0", "-debug=0"}, [] { LogPrint(BCLog::NET, "%s\n", "test"); });
+    Logging(bench, {"-logthreadnames=0"}, [] { LogInfo("%s\n", "test"); });
 }
-static void LoggingNoFile(benchmark::Bench& bench)
+
+static void LogWithoutWriteToFile(benchmark::Bench& bench)
 {
+    // Disable writing the log to a file, as used for unit tests and fuzzing in `MakeNoLogFileContext`.
     Logging(bench, {"-nodebuglogfile", "-debug=1"}, [] {
-        LogPrintf("%s\n", "test");
-        LogPrint(BCLog::NET, "%s\n", "test");
+        LogInfo("%s\n", "test");
+        LogDebug(BCLog::NET, "%s\n", "test");
     });
 }
 
-BENCHMARK(LoggingYoThreadNames, benchmark::PriorityLevel::HIGH);
-BENCHMARK(LoggingNoThreadNames, benchmark::PriorityLevel::HIGH);
-BENCHMARK(LoggingYoCategory, benchmark::PriorityLevel::HIGH);
-BENCHMARK(LoggingNoCategory, benchmark::PriorityLevel::HIGH);
-BENCHMARK(LoggingNoFile, benchmark::PriorityLevel::HIGH);
+BENCHMARK(LogWithDebug, benchmark::PriorityLevel::HIGH);
+BENCHMARK(LogWithoutDebug, benchmark::PriorityLevel::HIGH);
+BENCHMARK(LogWithThreadNames, benchmark::PriorityLevel::HIGH);
+BENCHMARK(LogWithoutThreadNames, benchmark::PriorityLevel::HIGH);
+BENCHMARK(LogWithoutWriteToFile, benchmark::PriorityLevel::HIGH);

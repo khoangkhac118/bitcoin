@@ -1,4 +1,4 @@
-// Copyright (c) 2022 The Bitcoin Core developers
+// Copyright (c) 2022-present The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,7 +8,7 @@
 #include <arith_uint256.h>
 #include <chain.h>
 #include <consensus/params.h>
-#include <net.h> // For NodeId
+#include <net.h>
 #include <primitives/block.h>
 #include <uint256.h>
 #include <util/bitdeque.h>
@@ -100,7 +100,7 @@ struct CompressedHeader {
 
 class HeadersSyncState {
 public:
-    ~HeadersSyncState() {}
+    ~HeadersSyncState() = default;
 
     enum class State {
         /** PRESYNC means the peer has not yet demonstrated their chain has
@@ -175,6 +175,13 @@ public:
      */
     CBlockLocator NextHeadersRequestLocator() const;
 
+protected:
+    /** The (secret) offset on the heights for which to create commitments.
+     *
+     * m_header_commitments entries are created at any height h for which
+     * (h % HEADER_COMMITMENT_PERIOD) == m_commit_offset. */
+    const unsigned m_commit_offset;
+
 private:
     /** Clear out all download state that might be in progress (freeing any used
      * memory), and mark this object as no longer usable.
@@ -217,16 +224,10 @@ private:
     arith_uint256 m_current_chain_work;
 
     /** m_hasher is a salted hasher for making our 1-bit commitments to headers we've seen. */
-    const SaltedTxidHasher m_hasher;
+    const SaltedUint256Hasher m_hasher;
 
     /** A queue of commitment bits, created during the 1st phase, and verified during the 2nd. */
     bitdeque<> m_header_commitments;
-
-    /** The (secret) offset on the heights for which to create commitments.
-     *
-     * m_header_commitments entries are created at any height h for which
-     * (h % HEADER_COMMITMENT_PERIOD) == m_commit_offset. */
-    const unsigned m_commit_offset;
 
     /** m_max_commitments is a bound we calculate on how long an honest peer's chain could be,
      * given the MTP rule.

@@ -2,7 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <util/system.h>
+#include <common/args.h>
+#include <logging.h>
 #include <walletinitinterface.h>
 
 class ArgsManager;
@@ -20,7 +21,7 @@ public:
     bool HasWalletSupport() const override {return false;}
     void AddWalletOptions(ArgsManager& argsman) const override;
     bool ParameterInteraction() const override {return true;}
-    void Construct(node::NodeContext& node) const override {LogPrintf("No wallet support compiled in!\n");}
+    void Construct(node::NodeContext& node) const override { LogInfo("No wallet support compiled in!"); }
 };
 
 void DummyWalletInit::AddWalletOptions(ArgsManager& argsman) const
@@ -46,9 +47,6 @@ void DummyWalletInit::AddWalletOptions(ArgsManager& argsman) const
         "-walletdir=<dir>",
         "-walletnotify=<cmd>",
         "-walletrbf",
-        "-dblogsize=<n>",
-        "-flushwallet",
-        "-privdb",
         "-walletrejectlongchains",
         "-walletcrosschain",
         "-unsafesqlitesync",

@@ -2,8 +2,40 @@
 <context>
     <name>AddressBookPage</name>
     <message>
+        <source>Right-click to edit address or label</source>
+        <translation type="unfinished">Te botiini apa otun lati se atunse si adireesi tabi isaami</translation>
+    </message>
+    <message>
+        <source>Create a new address</source>
+        <translation type="unfinished">si adireesi tuntun</translation>
+    </message>
+    <message>
         <source>&amp;New</source>
         <translation type="unfinished">&amp;ati tuntun</translation>
+    </message>
+    <message>
+        <source>Copy the currently selected address to the system clipboard</source>
+        <translation type="unfinished">da adiresi tuntun ti o sayan ko si eto sileti </translation>
+    </message>
+    <message>
+        <source>&amp;Copy</source>
+        <translation type="unfinished">daako</translation>
+    </message>
+    <message>
+        <source>C&amp;lose</source>
+        <translation type="unfinished">paade</translation>
+    </message>
+    <message>
+        <source>Delete the currently selected address from the list</source>
+        <translation type="unfinished">samukuro adiresi ti o sese sayan kuro ninu akojo</translation>
+    </message>
+    <message>
+        <source>Enter address or label to search</source>
+        <translation type="unfinished">Tẹ adirẹsi sii tàbí áámì làtí wáá</translation>
+    </message>
+    <message>
+        <source>Export the data in the current tab to a file</source>
+        <translation type="unfinished">Se òkèéé dátà ní tàábù lọwọlọwọ sí fáílì kán.</translation>
     </message>
     </context>
 <context>
@@ -105,6 +137,24 @@
 <context>
     <name>Intro</name>
     <message numerus="yes">
+        <source>%n GB of space available</source>
+        <translation type="unfinished">
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>(of %n GB needed)</source>
+        <translation type="unfinished">
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>(%n GB needed for full chain)</source>
+        <translation type="unfinished">
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>(sufficient to restore backups %n day(s) old)</source>
         <extracomment>Explanatory text on the capability of the current prune target.</extracomment>
         <translation type="unfinished">
@@ -187,6 +237,13 @@
     <message>
         <source>Date</source>
         <translation type="unfinished">Ojo</translation>
+    </message>
+    </context>
+<context>
+    <name>WalletView</name>
+    <message>
+        <source>Export the data in the current tab to a file</source>
+        <translation type="unfinished">Se òkèéé dátà ní tàábù lọwọlọwọ sí fáílì kán.</translation>
     </message>
     </context>
 </TS>

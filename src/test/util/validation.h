@@ -9,7 +9,9 @@
 
 class CValidationInterface;
 
-struct TestChainState : public Chainstate {
+struct TestChainstateManager : public ChainstateManager {
+    /** Disable the next write of all chainstates */
+    void DisableNextWrite();
     /** Reset the ibd cache to its initial state */
     void ResetIbd();
     /** Toggle IsInitialBlockDownload from true to false */
@@ -19,7 +21,11 @@ struct TestChainState : public Chainstate {
 class ValidationInterfaceTest
 {
 public:
-    static void BlockConnected(CValidationInterface& obj, const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex);
+    static void BlockConnected(
+        ChainstateRole role,
+        CValidationInterface& obj,
+        const std::shared_ptr<const CBlock>& block,
+        const CBlockIndex* pindex);
 };
 
 #endif // BITCOIN_TEST_UTIL_VALIDATION_H

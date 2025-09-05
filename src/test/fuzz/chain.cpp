@@ -29,8 +29,8 @@ FUZZ_TARGET(chain)
         (void)disk_block_index->GetBlockTimeMax();
         (void)disk_block_index->GetMedianTimePast();
         (void)disk_block_index->GetUndoPos();
-        (void)disk_block_index->HaveTxsDownloaded();
-        (void)disk_block_index->IsValid();
+        (void)disk_block_index->HaveNumChainTxs();
+        (void)disk_block_index->IsValid(BLOCK_VALID_TRANSACTIONS);
     }
 
     const CBlockHeader block_header = disk_block_index->GetBlockHeader();

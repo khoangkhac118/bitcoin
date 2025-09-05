@@ -19,7 +19,6 @@ from test_framework.authproxy import JSONRPCException
 class RpcMiscTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
-        self.supports_cli = False
 
     def run_test(self):
         node = self.nodes[0]
@@ -27,7 +26,7 @@ class RpcMiscTest(BitcoinTestFramework):
         self.log.info("test CHECK_NONFATAL")
         assert_raises_rpc_error(
             -1,
-            'Internal bug detected: "request.params[9].get_str() != "trigger_internal_bug""',
+            'Internal bug detected: request.params[9].get_str() != "trigger_internal_bug"',
             lambda: node.echo(arg9='trigger_internal_bug'),
         )
 
@@ -102,4 +101,4 @@ class RpcMiscTest(BitcoinTestFramework):
 
 
 if __name__ == '__main__':
-    RpcMiscTest().main()
+    RpcMiscTest(__file__).main()

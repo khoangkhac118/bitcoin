@@ -14,21 +14,26 @@
 
 class CTxMemPool;
 
-namespace node {
-
+namespace kernel {
 struct CacheSizes;
+} // namespace kernel
+
+namespace node {
 
 struct ChainstateLoadOptions {
     CTxMemPool* mempool{nullptr};
-    bool block_tree_db_in_memory{false};
     bool coins_db_in_memory{false};
-    bool reindex{false};
-    bool reindex_chainstate{false};
+    // Whether to wipe the chainstate database when loading it. If set, this
+    // will cause the chainstate database to be rebuilt starting from genesis.
+    bool wipe_chainstate_db{false};
     bool prune{false};
+    //! Setting require_full_verification to true will require all checks at
+    //! check_level (below) to succeed for loading to succeed. Setting it to
+    //! false will skip checks if cache is not big enough to run them, so may be
+    //! helpful for running with a small cache.
     bool require_full_verification{true};
     int64_t check_blocks{DEFAULT_CHECKBLOCKS};
     int64_t check_level{DEFAULT_CHECKLEVEL};
-    std::function<bool()> check_interrupt;
     std::function<void()> coins_error_cb;
 };
 
@@ -38,7 +43,8 @@ struct ChainstateLoadOptions {
 //! and exit cleanly in the interrupted case.
 enum class ChainstateLoadStatus {
     SUCCESS,
-    FAILURE,
+    FAILURE, //!< Generic failure which reindexing may fix
+    FAILURE_FATAL, //!< Fatal error which should not prompt to reindex
     FAILURE_INCOMPATIBLE_DB,
     FAILURE_INSUFFICIENT_DBCACHE,
     INTERRUPTED,
@@ -60,7 +66,7 @@ using ChainstateLoadResult = std::tuple<ChainstateLoadStatus, bilingual_str>;
  *
  *  LoadChainstate returns a (status code, error string) tuple.
  */
-ChainstateLoadResult LoadChainstate(ChainstateManager& chainman, const CacheSizes& cache_sizes,
+ChainstateLoadResult LoadChainstate(ChainstateManager& chainman, const kernel::CacheSizes& cache_sizes,
                                     const ChainstateLoadOptions& options);
 ChainstateLoadResult VerifyLoadedChainstate(ChainstateManager& chainman, const ChainstateLoadOptions& options);
 } // namespace node

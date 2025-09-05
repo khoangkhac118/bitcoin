@@ -1,5 +1,4 @@
 # Suppress warnings triggered in dependencies
-leak:libQt5Widgets
-
-# false-positive due to use of secure_allocator<>
-leak:GetRNGState
+leak:libQt6Widgets
+leak:QDBusConnectionPrivate
+leak:QLayoutPrivate

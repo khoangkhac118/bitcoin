@@ -43,12 +43,9 @@ def process_mapping(fname):
 
 
 class HelpRpcTest(BitcoinTestFramework):
-    def add_options(self, parser):
-        self.add_wallet_options(parser)
-
     def set_test_params(self):
         self.num_nodes = 1
-        self.supports_cli = False
+        self.uses_wallet = None
 
     def run_test(self):
         self.test_client_conversion_table()
@@ -85,8 +82,8 @@ class HelpRpcTest(BitcoinTestFramework):
 
         for argname, convert in converts_by_argname.items():
             if all(convert) != any(convert):
-                # Only allow dummy to fail consistency check
-                assert argname == 'dummy', ('WARNING: conversion mismatch for argument named %s (%s)' % (argname, list(zip(all_methods_by_argname[argname], converts_by_argname[argname]))))
+                # Only allow dummy and psbt to fail consistency check
+                assert argname in ['dummy', "psbt"], ('WARNING: conversion mismatch for argument named %s (%s)' % (argname, list(zip(all_methods_by_argname[argname], converts_by_argname[argname]))))
 
     def test_categories(self):
         node = self.nodes[0]
@@ -95,7 +92,8 @@ class HelpRpcTest(BitcoinTestFramework):
         assert_raises_rpc_error(-1, 'help', node.help, 'foo', 'bar')
 
         # invalid argument
-        assert_raises_rpc_error(-3, "JSON value of type number is not of expected type string", node.help, 0)
+        if not self.options.usecli:
+            assert_raises_rpc_error(-3, "JSON value of type number is not of expected type string", node.help, 0)
 
         # help of unknown command
         assert_equal(node.help('foo'), 'help: unknown command: foo')
@@ -132,4 +130,4 @@ class HelpRpcTest(BitcoinTestFramework):
 
 
 if __name__ == '__main__':
-    HelpRpcTest().main()
+    HelpRpcTest(__file__).main()

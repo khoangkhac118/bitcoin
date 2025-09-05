@@ -3,10 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <clientversion.h>
+#include <common/args.h>
 #include <flatfile.h>
 #include <streams.h>
 #include <test/util/setup_common.h>
-#include <util/system.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -23,6 +23,9 @@ BOOST_AUTO_TEST_CASE(flatfile_filename)
 
     FlatFileSeq seq2(data_dir / "a", "b", 16 * 1024);
     BOOST_CHECK_EQUAL(seq2.FileName(pos), data_dir / "a" / "b00456.dat");
+
+    // Check default constructor IsNull
+    assert(FlatFilePos{}.IsNull());
 }
 
 BOOST_AUTO_TEST_CASE(flatfile_open)
@@ -37,12 +40,13 @@ BOOST_AUTO_TEST_CASE(flatfile_open)
                       "lost if a trusted third party is still required to prevent double-spending.");
 
     size_t pos1 = 0;
-    size_t pos2 = pos1 + GetSerializeSize(line1, CLIENT_VERSION);
+    size_t pos2 = pos1 + GetSerializeSize(line1);
 
     // Write first line to file.
     {
         AutoFile file{seq.Open(FlatFilePos(0, pos1))};
         file << LIMITED_STRING(line1, 256);
+        BOOST_REQUIRE_EQUAL(file.fclose(), 0);
     }
 
     // Attempt to append to file opened in read-only mode.
@@ -55,6 +59,7 @@ BOOST_AUTO_TEST_CASE(flatfile_open)
     {
         AutoFile file{seq.Open(FlatFilePos(0, pos2))};
         file << LIMITED_STRING(line2, 256);
+        BOOST_REQUIRE_EQUAL(file.fclose(), 0);
     }
 
     // Read text from file in read-only mode.
@@ -76,6 +81,7 @@ BOOST_AUTO_TEST_CASE(flatfile_open)
 
         file >> LIMITED_STRING(text, 256);
         BOOST_CHECK_EQUAL(text, line2);
+        BOOST_REQUIRE_EQUAL(file.fclose(), 0);
     }
 
     // Ensure another file in the sequence has no data.
@@ -83,6 +89,7 @@ BOOST_AUTO_TEST_CASE(flatfile_open)
         std::string text;
         AutoFile file{seq.Open(FlatFilePos(1, pos2))};
         BOOST_CHECK_THROW(file >> LIMITED_STRING(text, 256), std::ios_base::failure);
+        BOOST_REQUIRE_EQUAL(file.fclose(), 0);
     }
 }
 

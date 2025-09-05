@@ -14,15 +14,9 @@ from test_framework.util import (
     assert_raises_rpc_error,
     set_node_times,
 )
-from test_framework.wallet_util import (
-    get_generate_key,
-)
 
 
 class TransactionTimeRescanTest(BitcoinTestFramework):
-    def add_options(self, parser):
-        self.add_wallet_options(parser)
-
     def set_test_params(self):
         self.setup_clean_chain = False
         self.num_nodes = 3
@@ -56,15 +50,23 @@ class TransactionTimeRescanTest(BitcoinTestFramework):
 
         # prepare the user wallet with 3 watch only addresses
         wo1 = usernode.getnewaddress()
+        wo1_desc = usernode.getaddressinfo(wo1)["desc"]
         wo2 = usernode.getnewaddress()
+        wo2_desc = usernode.getaddressinfo(wo2)["desc"]
         wo3 = usernode.getnewaddress()
+        wo3_desc = usernode.getaddressinfo(wo3)["desc"]
 
         usernode.createwallet(wallet_name='wo', disable_private_keys=True)
         wo_wallet = usernode.get_wallet_rpc('wo')
 
-        wo_wallet.importaddress(wo1)
-        wo_wallet.importaddress(wo2)
-        wo_wallet.importaddress(wo3)
+        import_res = wo_wallet.importdescriptors(
+            [
+                {"desc": wo1_desc, "timestamp": "now"},
+                {"desc": wo2_desc, "timestamp": "now"},
+                {"desc": wo3_desc, "timestamp": "now"},
+            ]
+        )
+        assert_equal(all([r["success"] for r in import_res]), True)
 
         self.log.info('Start transactions')
 
@@ -130,17 +132,24 @@ class TransactionTimeRescanTest(BitcoinTestFramework):
         restorenode.createwallet(wallet_name='wo', disable_private_keys=True)
         restorewo_wallet = restorenode.get_wallet_rpc('wo')
 
-        # for descriptor wallets, the test framework maps the importaddress RPC to the
-        # importdescriptors RPC (with argument 'timestamp'='now'), which always rescans
+        # importdescriptors with "timestamp": "now" always rescans
         # blocks of the past 2 hours, based on the current MTP timestamp; in order to avoid
         # importing the last address (wo3), we advance the time further and generate 10 blocks
-        if self.options.descriptors:
-            set_node_times(self.nodes, cur_time + ten_days + ten_days + ten_days + ten_days)
-            self.generatetoaddress(minernode, 10, m1)
+        set_node_times(self.nodes, cur_time + ten_days + ten_days + ten_days + ten_days)
+        self.generatetoaddress(minernode, 10, m1)
 
-        restorewo_wallet.importaddress(wo1, rescan=False)
-        restorewo_wallet.importaddress(wo2, rescan=False)
-        restorewo_wallet.importaddress(wo3, rescan=False)
+        import_res = restorewo_wallet.importdescriptors(
+            [
+                {"desc": wo1_desc, "timestamp": "now"},
+                {"desc": wo2_desc, "timestamp": "now"},
+                {"desc": wo3_desc, "timestamp": "now"},
+            ]
+        )
+        assert_equal(all([r["success"] for r in import_res]), True)
+
+        self.log.info('Testing abortrescan when no rescan is in progress')
+        assert_equal(restorewo_wallet.getwalletinfo()['scanning'], False)
+        assert_equal(restorewo_wallet.abortrescan(), False)
 
         # check user has 0 balance and no transactions
         assert_equal(restorewo_wallet.getbalance(), 0)
@@ -179,33 +188,6 @@ class TransactionTimeRescanTest(BitcoinTestFramework):
         enc_wallet = usernode.get_wallet_rpc("enc_wallet")
         assert_raises_rpc_error(-13, "Error: Please enter the wallet passphrase with walletpassphrase first.", enc_wallet.rescanblockchain)
 
-        if not self.options.descriptors:
-            self.log.info("Test rescanning an encrypted wallet")
-            hd_seed = get_generate_key().privkey
-
-            usernode.createwallet(wallet_name="temp_wallet", blank=True, descriptors=False)
-            temp_wallet = usernode.get_wallet_rpc("temp_wallet")
-            temp_wallet.sethdseed(seed=hd_seed)
-
-            for i in range(399):
-                temp_wallet.getnewaddress()
-
-            self.generatetoaddress(usernode, COINBASE_MATURITY + 1, temp_wallet.getnewaddress())
-            self.generatetoaddress(usernode, COINBASE_MATURITY + 1, temp_wallet.getnewaddress())
-
-            minernode.createwallet("encrypted_wallet", blank=True, passphrase="passphrase", descriptors=False)
-            encrypted_wallet = minernode.get_wallet_rpc("encrypted_wallet")
-
-            encrypted_wallet.walletpassphrase("passphrase", 1)
-            encrypted_wallet.sethdseed(seed=hd_seed)
-
-            batch = []
-            batch.append(encrypted_wallet.walletpassphrase.get_request("passphrase", 3))
-            batch.append(encrypted_wallet.rescanblockchain.get_request())
-
-            encrypted_wallet.batch(batch)
-
-            assert_equal(encrypted_wallet.getbalance(), temp_wallet.getbalance())
 
 if __name__ == '__main__':
-    TransactionTimeRescanTest().main()
+    TransactionTimeRescanTest(__file__).main()
