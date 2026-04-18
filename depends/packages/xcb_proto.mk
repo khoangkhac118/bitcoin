@@ -1,8 +1,8 @@
 package=xcb_proto
-$(package)_version=1.14.1
+$(package)_version=1.17.0
 $(package)_download_path=https://xorg.freedesktop.org/archive/individual/proto
-$(package)_file_name=xcb-proto-$($(package)_version).tar.xz
-$(package)_sha256_hash=f04add9a972ac334ea11d9d7eb4fc7f8883835da3e4859c9afa971efdf57fcc3
+$(package)_file_name=xcb-proto-$($(package)_version).tar.gz
+$(package)_sha256_hash=392d3c9690f8c8202a68fdb89c16fd55159ab8d65000a6da213f4a1576e97a16
 
 define $(package)_config_cmds
   $($(package)_autoconf)

@@ -2,16 +2,16 @@
 <context>
     <name>AddressBookPage</name>
     <message>
+        <source>Right-click to edit address or label</source>
+        <translation type="unfinished">Хаяг эсвэл шошгыг засаxд баруун товчийг дарна</translation>
+    </message>
+    <message>
         <source>Create a new address</source>
         <translation type="unfinished">Шинэ хаяг нээх</translation>
     </message>
     <message>
         <source>&amp;New</source>
         <translation type="unfinished">&amp;Шинэ</translation>
-    </message>
-    <message>
-        <source>Copy the currently selected address to the system clipboard</source>
-        <translation type="unfinished">Одоогоор сонгогдсон байгаа хаягуудыг сануулах</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -54,14 +54,6 @@
         <translation type="unfinished">С&amp;онго</translation>
     </message>
     <message>
-        <source>Sending addresses</source>
-        <translation type="unfinished">Илгээх хаягууд</translation>
-    </message>
-    <message>
-        <source>Receiving addresses</source>
-        <translation type="unfinished">Хүлээн авах хаяг</translation>
-    </message>
-    <message>
         <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation type="unfinished">Эдгээр Биткойн хаягууд нь илгээх хаягууд. Хүлээн авах хаяг болон тоо хэмжээг илгээхээсээ өмнө сайн нягталж үзэж байна уу</translation>
     </message>
@@ -81,7 +73,20 @@
         <source>Export Address List</source>
         <translation type="unfinished">Экспорт хийх хаягуудын жагсаалт</translation>
     </message>
-    </context>
+    <message>
+        <source>Comma separated file</source>
+        <extracomment>Expanded name of the CSV file format. See: https://en.wikipedia.org/wiki/Comma-separated_values.</extracomment>
+        <translation type="unfinished">таслалаар тусгаарлагдсан файлууд</translation>
+    </message>
+    <message>
+        <source>Sending addresses - %1</source>
+        <translation type="unfinished">хаягуудииг Илгээж байна - %1</translation>
+    </message>
+    <message>
+        <source>Exporting Failed</source>
+        <translation type="unfinished">Экспорт амжилтгүй боллоо</translation>
+    </message>
+</context>
 <context>
     <name>AddressTableModel</name>
     <message>
@@ -161,6 +166,13 @@
     </message>
     </context>
 <context>
+    <name>BitcoinApplication</name>
+    <message>
+        <source>Internal error</source>
+        <translation type="unfinished">Дотоод алдаа</translation>
+    </message>
+    </context>
+<context>
     <name>QObject</name>
     <message>
         <source>Error: %1</source>
@@ -222,17 +234,6 @@
     </message>
     </context>
 <context>
-    <name>bitcoin-core</name>
-    <message>
-        <source>Done loading</source>
-        <translation type="unfinished">Ачааллаж дууслаа</translation>
-    </message>
-    <message>
-        <source>Insufficient funds</source>
-        <translation type="unfinished">Таны дансны үлдэгдэл хүрэлцэхгүй байна</translation>
-    </message>
-    </context>
-<context>
     <name>BitcoinGUI</name>
     <message>
         <source>&amp;Transactions</source>
@@ -251,6 +252,10 @@
         <translation type="unfinished">Програмаас Гарах</translation>
     </message>
     <message>
+        <source>&amp;About %1</source>
+        <translation type="unfinished">&amp;Тухай %1</translation>
+    </message>
+    <message>
         <source>About &amp;Qt</source>
         <translation type="unfinished">&amp;Клиентийн тухай</translation>
     </message>
@@ -259,8 +264,17 @@
         <translation type="unfinished">Клиентийн тухай мэдээллийг харуул</translation>
     </message>
     <message>
+        <source>Create a new wallet</source>
+        <translation type="unfinished">Шинэ түрийвч үүсгэх</translation>
+    </message>
+    <message>
         <source>Wallet:</source>
         <translation type="unfinished">Хэтэвч:</translation>
+    </message>
+    <message>
+        <source>Network activity disabled.</source>
+        <extracomment>A substring of the tooltip.</extracomment>
+        <translation type="unfinished">Сүлжээний үйл ажиллагааг идэвхгүй болгосон.</translation>
     </message>
     <message>
         <source>Change the passphrase used for wallet encryption</source>
@@ -335,6 +349,46 @@
         <translation type="unfinished">Алдаа: %1</translation>
     </message>
     <message>
+        <source>Warning: %1</source>
+        <translation type="unfinished">Анхааруулга:%1</translation>
+    </message>
+    <message>
+        <source>Date: %1
+</source>
+        <translation type="unfinished">Огноо:%1
+</translation>
+    </message>
+    <message>
+        <source>Amount: %1
+</source>
+        <translation type="unfinished">Дүн: %1
+</translation>
+    </message>
+    <message>
+        <source>Wallet: %1
+</source>
+        <translation type="unfinished">Түрийвч: %1
+</translation>
+    </message>
+    <message>
+        <source>Type: %1
+</source>
+        <translation type="unfinished">Төрөл: %1
+</translation>
+    </message>
+    <message>
+        <source>Label: %1
+</source>
+        <translation type="unfinished">Шошго: %1
+</translation>
+    </message>
+    <message>
+        <source>Address: %1
+</source>
+        <translation type="unfinished">Хаяг: %1
+</translation>
+    </message>
+    <message>
         <source>Sent transaction</source>
         <translation type="unfinished">Гадагшаа гүйлгээ</translation>
     </message>
@@ -350,7 +404,11 @@
         <source>Wallet is &lt;b&gt;encrypted&lt;/b&gt; and currently &lt;b&gt;locked&lt;/b&gt;</source>
         <translation type="unfinished">Түрүйвч &lt;b&gt;цоожтой&lt;/b&gt; ба одоогоор цоож &lt;b&gt;хаалттай&lt;/b&gt; байна</translation>
     </message>
-    </context>
+    <message>
+        <source>Original message:</source>
+        <translation type="unfinished">Эх зурвас:</translation>
+    </message>
+</context>
 <context>
     <name>CoinControlDialog</name>
     <message>
@@ -433,25 +491,6 @@
     </message>
 </context>
 <context>
-    <name>Intro</name>
-    <message>
-        <source>Bitcoin</source>
-        <translation type="unfinished">Биткойн</translation>
-    </message>
-    <message numerus="yes">
-        <source>(sufficient to restore backups %n day(s) old)</source>
-        <extracomment>Explanatory text on the capability of the current prune target.</extracomment>
-        <translation type="unfinished">
-            <numerusform />
-            <numerusform />
-        </translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation type="unfinished">Алдаа</translation>
-    </message>
-    </context>
-<context>
     <name>HelpMessageDialog</name>
     <message>
         <source>version</source>
@@ -466,6 +505,46 @@
     </message>
 </context>
 <context>
+    <name>Intro</name>
+    <message>
+        <source>Bitcoin</source>
+        <translation type="unfinished">Биткойн</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n GB of space available</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>(of %n GB needed)</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>(%n GB needed for full chain)</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>(sufficient to restore backups %n day(s) old)</source>
+        <extracomment>Explanatory text on the capability of the current prune target.</extracomment>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished">Алдаа</translation>
+    </message>
+</context>
+<context>
     <name>ModalOverlay</name>
     <message>
         <source>Last block time</source>
@@ -474,6 +553,10 @@
     </context>
 <context>
     <name>OpenURIDialog</name>
+    <message>
+        <source>URI:</source>
+        <translation type="unfinished">Гипер холбоос</translation>
+    </message>
     <message>
         <source>Paste address from clipboard</source>
         <extracomment>Tooltip text for button that allows you to paste an address that is in your clipboard.</extracomment>
@@ -500,6 +583,7 @@
     </message>
     <message>
         <source>Client restart required to activate changes.</source>
+        <extracomment>Text explaining that the settings changed will not come into effect until the client is restarted.</extracomment>
         <translation type="unfinished">Ѳѳрчлѳлтүүдийг идэвхижүүлхийн тулд клиентийг ахин эхлүүлэх шаардлагтай</translation>
     </message>
     <message>
@@ -520,9 +604,23 @@
     </context>
 <context>
     <name>PSBTOperationsDialog</name>
+    <message numerus="yes">
+        <source>Signed %n input(s), but more signatures are still required.</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
     <message>
         <source>or</source>
         <translation type="unfinished">эсвэл</translation>
+    </message>
+    <message numerus="yes">
+        <source>Transaction has %n unsigned input(s).</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
     </message>
     </context>
 <context>
@@ -737,10 +835,6 @@
         <source>The amount exceeds your balance.</source>
         <translation type="unfinished">Энэ хэмжээ таны балансаас хэтэрсэн байна.</translation>
     </message>
-    <message>
-        <source>The total exceeds your balance when the %1 transaction fee is included.</source>
-        <translation type="unfinished">Гүйлгээний тѳлбѳр %1-ийг тооцхоор нийт дүн нь таны балансаас хэтрээд байна.</translation>
-    </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
         <translation type="unfinished">
@@ -779,10 +873,6 @@
         <source>Message:</source>
         <translation type="unfinished">Зурвас:</translation>
     </message>
-    <message>
-        <source>Pay To:</source>
-        <translation type="unfinished">Тѳлѳх хаяг:</translation>
-    </message>
     </context>
 <context>
     <name>SignVerifyMessageDialog</name>
@@ -799,10 +889,12 @@
     <name>TransactionDesc</name>
     <message>
         <source>%1/unconfirmed</source>
+        <extracomment>Text explaining the current status of a transaction, shown in the status field of the details window for this transaction. This status represents a transaction confirmed in at least one block, but less than 6 blocks.</extracomment>
         <translation type="unfinished">%1/баталгаажаагүй</translation>
     </message>
     <message>
         <source>%1 confirmations</source>
+        <extracomment>Text explaining the current status of a transaction, shown in the status field of the details window for this transaction. This status represents a transaction confirmed in 6 or more blocks.</extracomment>
         <translation type="unfinished">%1 баталгаажилтууд</translation>
     </message>
     <message>
@@ -883,10 +975,6 @@
         <translation type="unfinished">Явуулсан хаяг</translation>
     </message>
     <message>
-        <source>Payment to yourself</source>
-        <translation type="unfinished">Ѳѳрлүүгээ хийсэн тѳлбѳр</translation>
-    </message>
-    <message>
         <source>Mined</source>
         <translation type="unfinished">Олборлогдсон</translation>
     </message>
@@ -950,10 +1038,6 @@
         <translation type="unfinished">Явуулсан хаяг</translation>
     </message>
     <message>
-        <source>To yourself</source>
-        <translation type="unfinished">Ѳѳрлүүгээ</translation>
-    </message>
-    <message>
         <source>Mined</source>
         <translation type="unfinished">Олборлогдсон</translation>
     </message>
@@ -964,6 +1048,11 @@
     <message>
         <source>Min amount</source>
         <translation type="unfinished">Хамгийн бага хэмжээ</translation>
+    </message>
+    <message>
+        <source>Comma separated file</source>
+        <extracomment>Expanded name of the CSV file format. See: https://en.wikipedia.org/wiki/Comma-separated_values.</extracomment>
+        <translation type="unfinished">таслалаар тусгаарлагдсан файлууд</translation>
     </message>
     <message>
         <source>Confirmed</source>
@@ -990,6 +1079,10 @@
         <translation type="unfinished">Тодорхойлолт</translation>
     </message>
     <message>
+        <source>Exporting Failed</source>
+        <translation type="unfinished">Экспорт амжилтгүй боллоо</translation>
+    </message>
+    <message>
         <source>The transaction history was successfully saved to %1.</source>
         <translation type="unfinished">Гүйлгээнүй түүхийг %1-д амжилттай хадгаллаа.</translation>
     </message>
@@ -1000,6 +1093,10 @@
 </context>
 <context>
     <name>WalletFrame</name>
+    <message>
+        <source>Create a new wallet</source>
+        <translation type="unfinished">Шинэ түрийвч үүсгэх</translation>
+    </message>
     <message>
         <source>Error</source>
         <translation type="unfinished">Алдаа</translation>
@@ -1021,6 +1118,17 @@
     <message>
         <source>Export the data in the current tab to a file</source>
         <translation type="unfinished">Сонгогдсон таб дээрхи дата-г экспортлох</translation>
+    </message>
+    </context>
+<context>
+    <name>bitcoin-core</name>
+    <message>
+        <source>Done loading</source>
+        <translation type="unfinished">Ачааллаж дууслаа</translation>
+    </message>
+    <message>
+        <source>Insufficient funds</source>
+        <translation type="unfinished">Таны дансны үлдэгдэл хүрэлцэхгүй байна</translation>
     </message>
     </context>
 </TS>

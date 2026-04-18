@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2022 The Bitcoin Core developers
+// Copyright (c) 2011-present The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -68,8 +68,8 @@ void TrafficGraphWidget::paintEvent(QPaintEvent *)
     painter.drawLine(XMARGIN, YMARGIN + h, width() - XMARGIN, YMARGIN + h);
 
     // decide what order of magnitude we are
-    int base = floor(log10(fMax));
-    float val = pow(10.0f, base);
+    int base = std::floor(std::log10(fMax));
+    float val = std::pow(10.0f, base);
 
     const QString units = tr("kB/s");
     const float yMarginText = 2.0;

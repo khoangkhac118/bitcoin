@@ -14,10 +14,6 @@
         <translation type="unfinished">&amp;Жаңа</translation>
     </message>
     <message>
-        <source>Copy the currently selected address to the system clipboard</source>
-        <translation type="unfinished">Таңдалған мекенжайды жүйенің айырбастау буферіне көшіру</translation>
-    </message>
-    <message>
         <source>&amp;Copy</source>
         <translation type="unfinished">&amp;Көшіру</translation>
     </message>
@@ -58,14 +54,6 @@
         <translation type="unfinished">Т&amp;аңдау</translation>
     </message>
     <message>
-        <source>Sending addresses</source>
-        <translation type="unfinished">Жіберуші мекенжайлар</translation>
-    </message>
-    <message>
-        <source>Receiving addresses</source>
-        <translation type="unfinished">Қабылдаушы мекенжайлар</translation>
-    </message>
-    <message>
         <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation type="unfinished">Бұл сіздің төлем жіберетін Bitcoin мекенжайларыңыз. Тиын жібермес бұрын, әрқашан сома мен алушы мекенжайды тексеріңіз.</translation>
     </message>
@@ -79,7 +67,7 @@
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation type="unfinished">&amp;Өңдеу</translation>
+        <translation type="unfinished">&amp;Өзгерту</translation>
     </message>
     <message>
         <source>Export Address List</source>
@@ -243,14 +231,6 @@
 <context>
     <name>QObject</name>
     <message>
-        <source>Error: Specified data directory "%1" does not exist.</source>
-        <translation type="unfinished">Қате: берілген "%1" дерек директориясы жоқ.</translation>
-    </message>
-    <message>
-        <source>Error: Cannot parse configuration file: %1.</source>
-        <translation type="unfinished">Қате: конфигурация файлы талданбайды: %1.</translation>
-    </message>
-    <message>
         <source>Error: %1</source>
         <translation type="unfinished">Қате: %1</translation>
     </message>
@@ -307,25 +287,6 @@
             <numerusform />
             <numerusform />
         </translation>
-    </message>
-    </context>
-<context>
-    <name>bitcoin-core</name>
-    <message>
-        <source>Invalid amount for -fallbackfee=&lt;amount&gt;: '%s'</source>
-        <translation type="unfinished">-fallbackfee=&lt;amount&gt; үшін қате сан: "%s"</translation>
-    </message>
-    <message>
-        <source>Transaction amount too small</source>
-        <translation type="unfinished">Транзакция өте кішкентай</translation>
-    </message>
-    <message>
-        <source>Transaction too large</source>
-        <translation type="unfinished">Транзакция өте үлкен</translation>
-    </message>
-    <message>
-        <source>Verifying wallet(s)…</source>
-        <translation type="unfinished">Әмиян(дар) тексерілуде…</translation>
     </message>
     </context>
 <context>
@@ -496,10 +457,6 @@
         <translation type="unfinished">Дискідегі блоктар инедекстелуде...</translation>
     </message>
     <message>
-        <source>Reindexing blocks on disk…</source>
-        <translation type="unfinished">Дискідегі блоктар қайта индекстелуде…</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and bitcoin: URIs)</source>
         <translation type="unfinished">Төлем талап ету (QR кодтары мен биткоин құрады: URI)</translation>
     </message>
@@ -520,7 +477,7 @@
     </message>
     <message>
         <source>%1 behind</source>
-        <translation type="unfinished">%1 қалмады</translation>
+        <translation type="unfinished">%1 артта</translation>
     </message>
     <message>
         <source>Catching up…</source>
@@ -528,7 +485,7 @@
     </message>
     <message>
         <source>Error</source>
-        <translation type="unfinished">қате</translation>
+        <translation type="unfinished">Қате</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -536,7 +493,7 @@
     </message>
     <message>
         <source>Information</source>
-        <translation type="unfinished">Информация</translation>
+        <translation type="unfinished">Ақпарат</translation>
     </message>
     <message>
         <source>Up to date</source>
@@ -580,10 +537,6 @@
     <message>
         <source>Fee:</source>
         <translation type="unfinished">Комиссия</translation>
-    </message>
-    <message>
-        <source>Dust:</source>
-        <translation type="unfinished">Шаң</translation>
     </message>
     <message>
         <source>After Fee:</source>
@@ -642,8 +595,33 @@
 <context>
     <name>Intro</name>
     <message>
+        <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
+        <translation type="unfinished">Бастапқы синхронизация өте қымбат және компьютеріңіздің байқалмаған жабдық мәселелерін ашуы мүмкін. %1 қосылған сайын, жүктеу тоқтатылған жерден бастап жалғасады.</translation>
+    </message>
+    <message>
         <source>Bitcoin</source>
         <translation type="unfinished">Биткоин</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n GB of space available</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>(of %n GB needed)</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>(%n GB needed for full chain)</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
     </message>
     <message numerus="yes">
         <source>(sufficient to restore backups %n day(s) old)</source>
@@ -661,11 +639,7 @@
         <source>Error</source>
         <translation type="unfinished">Қате</translation>
     </message>
-    <message>
-        <source>This initial synchronisation is very demanding, and may expose hardware problems with your computer that had previously gone unnoticed. Each time you run %1, it will continue downloading where it left off.</source>
-        <translation type="unfinished">Бастапқы синхронизация өте қымбат және компьютеріңіздің байқалмаған жабдық мәселелерін ашуы мүмкін. %1 қосылған сайын, жүктеу тоқтатылған жерден бастап жалғасады.</translation>
-    </message>
-    </context>
+</context>
 <context>
     <name>OptionsDialog</name>
     <message>
@@ -681,16 +655,29 @@
         <translation type="unfinished">Әмиян</translation>
     </message>
     <message>
-        <source>Map port using &amp;UPnP</source>
-        <translation type="unfinished">UPnP арқылы порт &amp;сәйкестендіру</translation>
-    </message>
-    <message>
         <source>&amp;Window</source>
         <translation type="unfinished">&amp;Терезе</translation>
     </message>
     <message>
         <source>Error</source>
         <translation type="unfinished">Қате</translation>
+    </message>
+    </context>
+<context>
+    <name>PSBTOperationsDialog</name>
+    <message numerus="yes">
+        <source>Signed %n input(s), but more signatures are still required.</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Transaction has %n unsigned input(s).</source>
+        <translation type="unfinished">
+            <numerusform />
+            <numerusform />
+        </translation>
     </message>
     </context>
 <context>
@@ -778,10 +765,6 @@
         <source>After Fee:</source>
         <translation type="unfinished">Комиссия алу кейін</translation>
     </message>
-    <message>
-        <source>Dust:</source>
-        <translation type="unfinished">Шаң</translation>
-    </message>
     <message numerus="yes">
         <source>Estimated to begin confirmation within %n block(s).</source>
         <translation type="unfinished">
@@ -814,10 +797,6 @@
     </context>
 <context>
     <name>TransactionDesc</name>
-    <message>
-        <source>0/unconfirmed, %1</source>
-        <translation type="unfinished">0/расталмаған, %1</translation>
-    </message>
     <message>
         <source>Date</source>
         <translation type="unfinished">Күні</translation>
@@ -901,6 +880,21 @@
     <message>
         <source>Export the data in the current tab to a file</source>
         <translation type="unfinished">Қазіргі қойыншадағы деректерді файлға экспорттау</translation>
+    </message>
+    </context>
+<context>
+    <name>bitcoin-core</name>
+    <message>
+        <source>Transaction amount too small</source>
+        <translation type="unfinished">Транзакция өте кішкентай</translation>
+    </message>
+    <message>
+        <source>Transaction too large</source>
+        <translation type="unfinished">Транзакция өте үлкен</translation>
+    </message>
+    <message>
+        <source>Verifying wallet(s)…</source>
+        <translation type="unfinished">Әмиян(дар) тексерілуде…</translation>
     </message>
     </context>
 </TS>

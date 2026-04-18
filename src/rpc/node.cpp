@@ -1,46 +1,53 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2022 The Bitcoin Core developers
+// Copyright (c) 2009-present The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#include <bitcoin-build-config.h> // IWYU pragma: keep
 
 #include <chainparams.h>
 #include <httpserver.h>
 #include <index/blockfilterindex.h>
 #include <index/coinstatsindex.h>
 #include <index/txindex.h>
+#include <index/txospenderindex.h>
 #include <interfaces/chain.h>
 #include <interfaces/echo.h>
 #include <interfaces/init.h>
 #include <interfaces/ipc.h>
 #include <kernel/cs_main.h>
+#include <logging.h>
 #include <node/context.h>
 #include <rpc/server.h>
 #include <rpc/server_util.h>
 #include <rpc/util.h>
 #include <scheduler.h>
+#include <tinyformat.h>
 #include <univalue.h>
+#include <util/any.h>
 #include <util/check.h>
-#include <util/syscall_sandbox.h>
-#include <util/system.h>
+#include <util/time.h>
 
-#include <stdint.h>
+#include <cstdint>
 #ifdef HAVE_MALLOC_INFO
 #include <malloc.h>
 #endif
+#include <string_view>
 
 using node::NodeContext;
 
-static RPCHelpMan setmocktime()
+static RPCMethod setmocktime()
 {
-    return RPCHelpMan{"setmocktime",
-        "\nSet the local time to given timestamp (-regtest only)\n",
+    return RPCMethod{
+        "setmocktime",
+        "Set the local time to given timestamp (-regtest only)\n",
         {
             {"timestamp", RPCArg::Type::NUM, RPCArg::Optional::NO, UNIX_EPOCH_TIME + "\n"
              "Pass 0 to go back to using the system time."},
         },
         RPCResult{RPCResult::Type::NONE, "", ""},
         RPCExamples{""},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
     if (!Params().IsMockableChain()) {
         throw std::runtime_error("setmocktime is for regression testing (-regtest mode) only");
@@ -54,15 +61,15 @@ static RPCHelpMan setmocktime()
     LOCK(cs_main);
 
     const int64_t time{request.params[0].getInt<int64_t>()};
-    if (time < 0) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Mocktime cannot be negative: %s.", time));
+    constexpr int64_t max_time{Ticks<std::chrono::seconds>(std::chrono::nanoseconds::max())};
+    if (time < 0 || time > max_time) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Mocktime must be in the range [0, %s], not %s.", max_time, time));
     }
+
     SetMockTime(time);
-    auto node_context = util::AnyPtr<NodeContext>(request.context);
-    if (node_context) {
-        for (const auto& chain_client : node_context->chain_clients) {
-            chain_client->setMockTime(time);
-        }
+    const NodeContext& node_context{EnsureAnyNodeContext(request.context)};
+    for (const auto& chain_client : node_context.chain_clients) {
+        chain_client->setMockTime(time);
     }
 
     return UniValue::VNULL;
@@ -70,37 +77,17 @@ static RPCHelpMan setmocktime()
     };
 }
 
-#if defined(USE_SYSCALL_SANDBOX)
-static RPCHelpMan invokedisallowedsyscall()
+static RPCMethod mockscheduler()
 {
-    return RPCHelpMan{
-        "invokedisallowedsyscall",
-        "\nInvoke a disallowed syscall to trigger a syscall sandbox violation. Used for testing purposes.\n",
-        {},
-        RPCResult{RPCResult::Type::NONE, "", ""},
-        RPCExamples{
-            HelpExampleCli("invokedisallowedsyscall", "") + HelpExampleRpc("invokedisallowedsyscall", "")},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
-            if (!Params().IsTestChain()) {
-                throw std::runtime_error("invokedisallowedsyscall is used for testing only.");
-            }
-            TestDisallowedSandboxCall();
-            return UniValue::VNULL;
-        },
-    };
-}
-#endif // USE_SYSCALL_SANDBOX
-
-static RPCHelpMan mockscheduler()
-{
-    return RPCHelpMan{"mockscheduler",
-        "\nBump the scheduler into the future (-regtest only)\n",
+    return RPCMethod{
+        "mockscheduler",
+        "Bump the scheduler into the future (-regtest only)\n",
         {
             {"delta_time", RPCArg::Type::NUM, RPCArg::Optional::NO, "Number of seconds to forward the scheduler into the future." },
         },
         RPCResult{RPCResult::Type::NONE, "", ""},
         RPCExamples{""},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
     if (!Params().IsMockableChain()) {
         throw std::runtime_error("mockscheduler is for regression testing (-regtest mode) only");
@@ -111,10 +98,12 @@ static RPCHelpMan mockscheduler()
         throw std::runtime_error("delta_time must be between 1 and 3600 seconds (1 hr)");
     }
 
-    auto node_context = CHECK_NONFATAL(util::AnyPtr<NodeContext>(request.context));
-    // protect against null pointer dereference
-    CHECK_NONFATAL(node_context->scheduler);
-    node_context->scheduler->MockForward(std::chrono::seconds(delta_seconds));
+    const NodeContext& node_context{EnsureAnyNodeContext(request.context)};
+    CHECK_NONFATAL(node_context.scheduler)->MockForward(std::chrono::seconds{delta_seconds});
+    CHECK_NONFATAL(node_context.validation_signals)->SyncWithValidationInterfaceQueue();
+    for (const auto& chain_client : node_context.chain_clients) {
+        chain_client->schedulerMockForward(std::chrono::seconds(delta_seconds));
+    }
 
     return UniValue::VNULL;
 },
@@ -125,12 +114,12 @@ static UniValue RPCLockedMemoryInfo()
 {
     LockedPool::Stats stats = LockedPoolManager::Instance().stats();
     UniValue obj(UniValue::VOBJ);
-    obj.pushKV("used", uint64_t(stats.used));
-    obj.pushKV("free", uint64_t(stats.free));
-    obj.pushKV("total", uint64_t(stats.total));
-    obj.pushKV("locked", uint64_t(stats.locked));
-    obj.pushKV("chunks_used", uint64_t(stats.chunks_used));
-    obj.pushKV("chunks_free", uint64_t(stats.chunks_free));
+    obj.pushKV("used", stats.used);
+    obj.pushKV("free", stats.free);
+    obj.pushKV("total", stats.total);
+    obj.pushKV("locked", stats.locked);
+    obj.pushKV("chunks_used", stats.chunks_used);
+    obj.pushKV("chunks_free", stats.chunks_free);
     return obj;
 }
 
@@ -153,17 +142,17 @@ static std::string RPCMallocInfo()
 }
 #endif
 
-static RPCHelpMan getmemoryinfo()
+static RPCMethod getmemoryinfo()
 {
     /* Please, avoid using the word "pool" here in the RPC interface or help,
      * as users will undoubtedly confuse it with the other "memory pool"
      */
-    return RPCHelpMan{"getmemoryinfo",
+    return RPCMethod{"getmemoryinfo",
                 "Returns an object containing information about memory usage.\n",
                 {
                     {"mode", RPCArg::Type::STR, RPCArg::Default{"stats"}, "determines what kind of information is returned.\n"
             "  - \"stats\" returns general statistics about memory usage in the daemon.\n"
-            "  - \"mallocinfo\" returns an XML string describing low-level heap state (only available if compiled with glibc 2.10+)."},
+            "  - \"mallocinfo\" returns an XML string describing low-level heap state (only available if compiled with glibc)."},
                 },
                 {
                     RPCResult{"mode \"stats\"",
@@ -188,9 +177,9 @@ static RPCHelpMan getmemoryinfo()
                     HelpExampleCli("getmemoryinfo", "")
             + HelpExampleRpc("getmemoryinfo", "")
                 },
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
-    std::string mode = request.params[0].isNull() ? "stats" : request.params[0].get_str();
+    auto mode{self.Arg<std::string_view>("mode")};
     if (mode == "stats") {
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("locked", RPCLockedMemoryInfo());
@@ -202,7 +191,7 @@ static RPCHelpMan getmemoryinfo()
         throw JSONRPCError(RPC_INVALID_PARAMETER, "mallocinfo mode not available");
 #endif
     } else {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "unknown mode " + mode);
+        throw JSONRPCError(RPC_INVALID_PARAMETER, tfm::format("unknown mode %s", mode));
     }
 },
     };
@@ -226,9 +215,9 @@ static void EnableOrDisableLogCategories(UniValue cats, bool enable) {
     }
 }
 
-static RPCHelpMan logging()
+static RPCMethod logging()
 {
-    return RPCHelpMan{"logging",
+    return RPCMethod{"logging",
             "Gets and sets the logging configuration.\n"
             "When called without an argument, returns the list of categories with status that are currently being debug logged or not.\n"
             "When called with arguments, adds or removes categories from debug logging and return the lists above.\n"
@@ -237,7 +226,6 @@ static RPCHelpMan logging()
             "The valid logging categories are: " + LogInstance().LogCategoriesString() + "\n"
             "In addition, the following are available as category names with special meanings:\n"
             "  - \"all\",  \"1\" : represent all logging categories.\n"
-            "  - \"none\", \"0\" : even if other logging categories are specified, ignore all of them.\n"
             ,
                 {
                     {"include", RPCArg::Type::ARR, RPCArg::Optional::OMITTED, "The categories to add to debug logging",
@@ -259,17 +247,17 @@ static RPCHelpMan logging()
                     HelpExampleCli("logging", "\"[\\\"all\\\"]\" \"[\\\"http\\\"]\"")
             + HelpExampleRpc("logging", "[\"all\"], [\"libevent\"]")
                 },
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
-    uint32_t original_log_categories = LogInstance().GetCategoryMask();
+    BCLog::CategoryMask original_log_categories = LogInstance().GetCategoryMask();
     if (request.params[0].isArray()) {
         EnableOrDisableLogCategories(request.params[0], true);
     }
     if (request.params[1].isArray()) {
         EnableOrDisableLogCategories(request.params[1], false);
     }
-    uint32_t updated_log_categories = LogInstance().GetCategoryMask();
-    uint32_t changed_log_categories = original_log_categories ^ updated_log_categories;
+    BCLog::CategoryMask updated_log_categories = LogInstance().GetCategoryMask();
+    BCLog::CategoryMask changed_log_categories = original_log_categories ^ updated_log_categories;
 
     // Update libevent logging if BCLog::LIBEVENT has changed.
     if (changed_log_categories & BCLog::LIBEVENT) {
@@ -286,10 +274,11 @@ static RPCHelpMan logging()
     };
 }
 
-static RPCHelpMan echo(const std::string& name)
+static RPCMethod echo(const std::string& name)
 {
-    return RPCHelpMan{name,
-                "\nSimply echo back the input arguments. This command is for testing.\n"
+    return RPCMethod{
+        name,
+        "Simply echo back the input arguments. This command is for testing.\n"
                 "\nIt will return an internal bug report when arg9='trigger_internal_bug' is passed.\n"
                 "\nThe difference between echo and echojson is that echojson has argument conversion enabled in the client-side table in "
                 "bitcoin-cli and the GUI. There is no server-side difference.",
@@ -307,7 +296,7 @@ static RPCHelpMan echo(const std::string& name)
         },
                 RPCResult{RPCResult::Type::ANY, "", "Returns whatever was passed in"},
                 RPCExamples{""},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
     if (request.params[9].isStr()) {
         CHECK_NONFATAL(request.params[9].get_str() != "trigger_internal_bug");
@@ -318,20 +307,20 @@ static RPCHelpMan echo(const std::string& name)
     };
 }
 
-static RPCHelpMan echo() { return echo("echo"); }
-static RPCHelpMan echojson() { return echo("echojson"); }
+static RPCMethod echo() { return echo("echo"); }
+static RPCMethod echojson() { return echo("echojson"); }
 
-static RPCHelpMan echoipc()
+static RPCMethod echoipc()
 {
-    return RPCHelpMan{
+    return RPCMethod{
         "echoipc",
-        "\nEcho back the input argument, passing it through a spawned process in a multiprocess build.\n"
+        "Echo back the input argument, passing it through a spawned process in a multiprocess build.\n"
         "This command is for testing.\n",
         {{"arg", RPCArg::Type::STR, RPCArg::Optional::NO, "The string to echo",}},
         RPCResult{RPCResult::Type::STR, "echo", "The echoed string."},
         RPCExamples{HelpExampleCli("echo", "\"Hello world\"") +
                     HelpExampleRpc("echo", "\"Hello world\"")},
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue {
+        [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue {
             interfaces::Init& local_init = *EnsureAnyNodeContext(request.context).init;
             std::unique_ptr<interfaces::Echo> echo;
             if (interfaces::Ipc* ipc = local_init.ipc()) {
@@ -367,14 +356,15 @@ static UniValue SummaryToJSON(const IndexSummary&& summary, std::string index_na
     UniValue entry(UniValue::VOBJ);
     entry.pushKV("synced", summary.synced);
     entry.pushKV("best_block_height", summary.best_block_height);
-    ret_summary.pushKV(summary.name, entry);
+    ret_summary.pushKV(summary.name, std::move(entry));
     return ret_summary;
 }
 
-static RPCHelpMan getindexinfo()
+static RPCMethod getindexinfo()
 {
-    return RPCHelpMan{"getindexinfo",
-                "\nReturns the status of one or all available indices currently running in the node.\n",
+    return RPCMethod{
+        "getindexinfo",
+        "Returns the status of one or all available indices currently running in the node.\n",
                 {
                     {"index_name", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Filter results for an index with a specific name."},
                 },
@@ -395,10 +385,10 @@ static RPCHelpMan getindexinfo()
                   + HelpExampleCli("getindexinfo", "txindex")
                   + HelpExampleRpc("getindexinfo", "txindex")
                 },
-                [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+                [](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
 {
     UniValue result(UniValue::VOBJ);
-    const std::string index_name = request.params[0].isNull() ? "" : request.params[0].get_str();
+    const std::string index_name{self.MaybeArg<std::string_view>("index_name").value_or("")};
 
     if (g_txindex) {
         result.pushKVs(SummaryToJSON(g_txindex->GetSummary(), index_name));
@@ -406,6 +396,10 @@ static RPCHelpMan getindexinfo()
 
     if (g_coin_stats_index) {
         result.pushKVs(SummaryToJSON(g_coin_stats_index->GetSummary(), index_name));
+    }
+
+    if (g_txospenderindex) {
+        result.pushKVs(SummaryToJSON(g_txospenderindex->GetSummary(), index_name));
     }
 
     ForEachBlockFilterIndex([&result, &index_name](const BlockFilterIndex& index) {
@@ -428,9 +422,6 @@ void RegisterNodeRPCCommands(CRPCTable& t)
         {"hidden", &echo},
         {"hidden", &echojson},
         {"hidden", &echoipc},
-#if defined(USE_SYSCALL_SANDBOX)
-        {"hidden", &invokedisallowedsyscall},
-#endif // USE_SYSCALL_SANDBOX
     };
     for (const auto& c : commands) {
         t.appendCommand(c.name, &c);

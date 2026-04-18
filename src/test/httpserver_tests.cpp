@@ -1,8 +1,9 @@
-// Copyright (c) 2012-2022 The Bitcoin Core developers
+// Copyright (c) 2012-present The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <httpserver.h>
+#include <test/util/common.h>
 #include <test/util/setup_common.h>
 
 #include <boost/test/unit_test.hpp>
@@ -34,5 +35,9 @@ BOOST_AUTO_TEST_CASE(test_query_parameters)
     // Invalid query string syntax is the same as not having parameters
     uri = "/rest/endpoint/someresource.json&p1=v1&p2=v2";
     BOOST_CHECK(!GetQueryParameterFromUri(uri.c_str(), "p1").has_value());
+
+    // URI with invalid characters (%) raises a runtime error regardless of which query parameter is queried
+    uri = "/rest/endpoint/someresource.json&p1=v1&p2=v2%";
+    BOOST_CHECK_EXCEPTION(GetQueryParameterFromUri(uri.c_str(), "p1"), std::runtime_error, HasReason("URI parsing failed, it likely contained RFC 3986 invalid characters"));
 }
 BOOST_AUTO_TEST_SUITE_END()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2016-2022 The Bitcoin Core developers
+# Copyright (c) 2016-present The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Encode and decode Bitcoin addresses.
@@ -8,7 +8,6 @@
 - bech32 segwit v0 P2WPKH and P2WSH addresses.
 - bech32m segwit v1 P2TR addresses."""
 
-import enum
 import unittest
 
 from .script import (
@@ -20,36 +19,40 @@ from .script import (
     sha256,
     taproot_construct,
 )
-from .segwit_addr import encode_segwit_address
 from .util import assert_equal
+from test_framework.script_util import (
+    keyhash_to_p2pkh_script,
+    program_to_witness_script,
+    scripthash_to_p2sh_script,
+)
+from test_framework.segwit_addr import (
+    decode_segwit_address,
+    encode_segwit_address,
+)
+
 
 ADDRESS_BCRT1_UNSPENDABLE = 'bcrt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3xueyj'
 ADDRESS_BCRT1_UNSPENDABLE_DESCRIPTOR = 'addr(bcrt1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3xueyj)#juyq9d97'
 # Coins sent to this address can be spent with a witness stack of just OP_TRUE
 ADDRESS_BCRT1_P2WSH_OP_TRUE = 'bcrt1qft5p2uhsdcdc3l2ua4ap5qqfg4pjaqlp250x7us7a8qqhrxrxfsqseac85'
 
-
-class AddressType(enum.Enum):
-    bech32 = 'bech32'
-    p2sh_segwit = 'p2sh-segwit'
-    legacy = 'legacy'  # P2PKH
-
-
 b58chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 
-def create_deterministic_address_bcrt1_p2tr_op_true():
+def create_deterministic_address_bcrt1_p2tr_op_true(explicit_internal_key=None):
     """
     Generates a deterministic bech32m address (segwit v1 output) that
     can be spent with a witness stack of OP_TRUE and the control block
     with internal public key (script-path spending).
 
-    Returns a tuple with the generated address and the internal key.
+    Returns a tuple with the generated address and the TaprootInfo object.
     """
-    internal_key = (1).to_bytes(32, 'big')
-    address = output_key_to_p2tr(taproot_construct(internal_key, [(None, CScript([OP_TRUE]))]).output_pubkey)
-    assert_equal(address, 'bcrt1p9yfmy5h72durp7zrhlw9lf7jpwjgvwdg0jr0lqmmjtgg83266lqsekaqka')
-    return (address, internal_key)
+    internal_key = explicit_internal_key or (1).to_bytes(32, 'big')
+    taproot_info = taproot_construct(internal_key, [("only-path", CScript([OP_TRUE]))])
+    address = output_key_to_p2tr(taproot_info.output_pubkey)
+    if explicit_internal_key is None:
+        assert_equal(address, 'bcrt1p9yfmy5h72durp7zrhlw9lf7jpwjgvwdg0jr0lqmmjtgg83266lqsekaqka')
+    return (address, taproot_info)
 
 
 def byte_to_base58(b, version):
@@ -97,12 +100,12 @@ def base58_to_byte(s):
 
 
 def keyhash_to_p2pkh(hash, main=False):
-    assert len(hash) == 20
+    assert_equal(len(hash), 20)
     version = 0 if main else 111
     return byte_to_base58(hash, version)
 
 def scripthash_to_p2sh(hash, main=False):
-    assert len(hash) == 20
+    assert_equal(len(hash), 20)
     version = 5 if main else 196
     return byte_to_base58(hash, version)
 
@@ -141,8 +144,11 @@ def script_to_p2sh_p2wsh(script, main=False):
     return script_to_p2sh(p2shscript, main)
 
 def output_key_to_p2tr(key, main=False):
-    assert len(key) == 32
+    assert_equal(len(key), 32)
     return program_to_witness(1, key, main)
+
+def p2a(main=False):
+    return program_to_witness(1, "4e73", main)
 
 def check_key(key):
     if (type(key) is str):
@@ -157,6 +163,29 @@ def check_script(script):
     if (type(script) is bytes or type(script) is CScript):
         return script
     assert False
+
+
+def bech32_to_bytes(address):
+    hrp = address.split('1')[0]
+    if hrp not in ['bc', 'tb', 'bcrt']:
+        return (None, None)
+    version, payload = decode_segwit_address(hrp, address)
+    if version is None:
+        return (None, None)
+    return version, bytearray(payload)
+
+
+def address_to_scriptpubkey(address):
+    """Converts a given address to the corresponding output script (scriptPubKey)."""
+    version, payload = bech32_to_bytes(address)
+    if version is not None:
+        return program_to_witness_script(version, payload) # testnet segwit scriptpubkey
+    payload, version = base58_to_byte(address)
+    if version == 111:  # testnet pubkey hash
+        return keyhash_to_p2pkh_script(payload)
+    elif version == 196:  # testnet script hash
+        return scripthash_to_p2sh_script(payload)
+    raise ValueError(f"Unsupported address type: {address}")
 
 
 class TestFrameworkScript(unittest.TestCase):
@@ -176,3 +205,18 @@ class TestFrameworkScript(unittest.TestCase):
         check_base58(bytes.fromhex('0041c1eaf111802559bad61b60d62b1f897c63928a'), 0)
         check_base58(bytes.fromhex('000041c1eaf111802559bad61b60d62b1f897c63928a'), 0)
         check_base58(bytes.fromhex('00000041c1eaf111802559bad61b60d62b1f897c63928a'), 0)
+
+
+    def test_bech32_decode(self):
+        def check_bech32_decode(payload, version):
+            hrp = "tb"
+            self.assertEqual(bech32_to_bytes(encode_segwit_address(hrp, version, payload)), (version, payload))
+
+        check_bech32_decode(bytes.fromhex('36e3e2a33f328de12e4b43c515a75fba2632ecc3'), 0)
+        check_bech32_decode(bytes.fromhex('823e9790fc1d1782321140d4f4aa61aabd5e045b'), 0)
+        check_bech32_decode(bytes.fromhex('79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798'), 1)
+        check_bech32_decode(bytes.fromhex('39cf8ebd95134f431c39db0220770bd127f5dd3cc103c988b7dcd577ae34e354'), 1)
+        check_bech32_decode(bytes.fromhex('708244006d27c757f6f1fc6f853b6ec26268b727866f7ce632886e34eb5839a3'), 1)
+        check_bech32_decode(bytes.fromhex('616211ab00dffe0adcb6ce258d6d3fd8cbd901e2'), 0)
+        check_bech32_decode(bytes.fromhex('b6a7c98b482d7fb21c9fa8e65692a0890410ff22'), 0)
+        check_bech32_decode(bytes.fromhex('f0c2109cb1008cfa7b5a09cc56f7267cd8e50929'), 0)

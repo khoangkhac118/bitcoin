@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022-present The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 import base64
 
+from .util import assert_equal
 from .messages import (
     CTransaction,
     deser_string,
@@ -50,6 +51,9 @@ PSBT_IN_TAP_LEAF_SCRIPT = 0x15
 PSBT_IN_TAP_BIP32_DERIVATION = 0x16
 PSBT_IN_TAP_INTERNAL_KEY = 0x17
 PSBT_IN_TAP_MERKLE_ROOT = 0x18
+PSBT_IN_MUSIG2_PARTICIPANT_PUBKEYS = 0x1a
+PSBT_IN_MUSIG2_PUB_NONCE = 0x1b
+PSBT_IN_MUSIG2_PARTIAL_SIG = 0x1c
 PSBT_IN_PROPRIETARY = 0xfc
 
 # per-output types
@@ -61,6 +65,7 @@ PSBT_OUT_SCRIPT = 0x04
 PSBT_OUT_TAP_INTERNAL_KEY = 0x05
 PSBT_OUT_TAP_TREE = 0x06
 PSBT_OUT_TAP_BIP32_DERIVATION = 0x07
+PSBT_OUT_MUSIG2_PARTICIPANT_PUBKEYS = 0x08
 PSBT_OUT_PROPRIETARY = 0xfc
 
 
@@ -88,6 +93,9 @@ class PSBTMap:
         for k,v in self.map.items():
             if isinstance(k, int) and 0 <= k and k <= 255:
                 k = bytes([k])
+            if isinstance(v, list):
+                assert all(type(elem) is bytes for elem in v)
+                v = b"".join(v)  # simply concatenate the byte-strings w/o size prefixes
             m += ser_compact_size(len(k)) + k
             m += ser_compact_size(len(v)) + v
         m += b"\x00"
@@ -103,10 +111,10 @@ class PSBT:
         self.tx = None
 
     def deserialize(self, f):
-        assert f.read(5) == b"psbt\xff"
+        assert_equal(f.read(5), b"psbt\xff")
         self.g = from_binary(PSBTMap, f)
-        assert 0 in self.g.map
-        self.tx = from_binary(CTransaction, self.g.map[0])
+        assert PSBT_GLOBAL_UNSIGNED_TX in self.g.map
+        self.tx = from_binary(CTransaction, self.g.map[PSBT_GLOBAL_UNSIGNED_TX])
         self.i = [from_binary(PSBTMap, f) for _ in self.tx.vin]
         self.o = [from_binary(PSBTMap, f) for _ in self.tx.vout]
         return self
@@ -115,10 +123,10 @@ class PSBT:
         assert isinstance(self.g, PSBTMap)
         assert isinstance(self.i, list) and all(isinstance(x, PSBTMap) for x in self.i)
         assert isinstance(self.o, list) and all(isinstance(x, PSBTMap) for x in self.o)
-        assert 0 in self.g.map
-        tx = from_binary(CTransaction, self.g.map[0])
-        assert len(tx.vin) == len(self.i)
-        assert len(tx.vout) == len(self.o)
+        assert PSBT_GLOBAL_UNSIGNED_TX in self.g.map
+        tx = from_binary(CTransaction, self.g.map[PSBT_GLOBAL_UNSIGNED_TX])
+        assert_equal(len(tx.vin), len(self.i))
+        assert_equal(len(tx.vout), len(self.o))
 
         psbt = [x.serialize() for x in [self.g] + self.i + self.o]
         return b"psbt\xff" + b"".join(psbt)
@@ -130,7 +138,7 @@ class PSBT:
         for m in self.i + self.o:
             m.map.clear()
 
-        self.g = PSBTMap(map={0: self.g.map[0]})
+        self.g = PSBTMap(map={PSBT_GLOBAL_UNSIGNED_TX: self.g.map[PSBT_GLOBAL_UNSIGNED_TX]})
 
     def to_base64(self):
         return base64.b64encode(self.serialize()).decode("utf8")

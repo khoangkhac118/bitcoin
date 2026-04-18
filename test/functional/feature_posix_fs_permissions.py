@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2022 The Bitcoin Core developers
+# Copyright (c) 2022-present The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test file system permissions for POSIX platforms.
@@ -9,6 +9,7 @@ import os
 import stat
 
 from test_framework.test_framework import BitcoinTestFramework
+from test_framework.util import assert_equal
 
 
 class PosixFsPermissionsTest(BitcoinTestFramework):
@@ -22,22 +23,22 @@ class PosixFsPermissionsTest(BitcoinTestFramework):
     def check_directory_permissions(self, dir):
         mode = os.lstat(dir).st_mode
         self.log.info(f"{stat.filemode(mode)} {dir}")
-        assert mode == (stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        assert_equal(mode, (stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR))
 
     def check_file_permissions(self, file):
         mode = os.lstat(file).st_mode
         self.log.info(f"{stat.filemode(mode)} {file}")
-        assert mode == (stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR)
+        assert_equal(mode, (stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR))
 
     def run_test(self):
         self.stop_node(0)
-        datadir = os.path.join(self.nodes[0].datadir, self.chain)
+        datadir = self.nodes[0].chain_path
         self.check_directory_permissions(datadir)
-        walletsdir = os.path.join(datadir, "wallets")
+        walletsdir = self.nodes[0].wallets_path
         self.check_directory_permissions(walletsdir)
-        debuglog = os.path.join(datadir, "debug.log")
+        debuglog = self.nodes[0].debug_log_path
         self.check_file_permissions(debuglog)
 
 
 if __name__ == '__main__':
-    PosixFsPermissionsTest().main()
+    PosixFsPermissionsTest(__file__).main()

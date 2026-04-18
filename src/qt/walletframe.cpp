@@ -1,10 +1,9 @@
-// Copyright (c) 2011-2022 The Bitcoin Core developers
+// Copyright (c) 2011-present The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <qt/walletframe.h>
 
-#include <fs.h>
 #include <node/interface_ui.h>
 #include <psbt.h>
 #include <qt/guiutil.h>
@@ -12,7 +11,8 @@
 #include <qt/psbtoperationsdialog.h>
 #include <qt/walletmodel.h>
 #include <qt/walletview.h>
-#include <util/system.h>
+#include <util/fs.h>
+#include <util/fs_helpers.h>
 
 #include <cassert>
 #include <fstream>
@@ -70,7 +70,7 @@ bool WalletFrame::addView(WalletView* walletView)
 {
     if (!clientModel) return false;
 
-    if (mapWalletViews.count(walletView->getWalletModel()) > 0) return false;
+    if (mapWalletViews.contains(walletView->getWalletModel())) return false;
 
     walletView->setClientModel(clientModel);
     walletView->showOutOfSyncWarning(bOutOfSync);
@@ -90,7 +90,7 @@ bool WalletFrame::addView(WalletView* walletView)
 
 void WalletFrame::setCurrentWallet(WalletModel* wallet_model)
 {
-    if (mapWalletViews.count(wallet_model) == 0) return;
+    if (!mapWalletViews.contains(wallet_model)) return;
 
     // Stop the effect of hidden widgets on the size hint of the shown one in QStackedWidget.
     WalletView* view_about_to_hide = currentWalletView();
@@ -116,7 +116,7 @@ void WalletFrame::setCurrentWallet(WalletModel* wallet_model)
 
 void WalletFrame::removeWallet(WalletModel* wallet_model)
 {
-    if (mapWalletViews.count(wallet_model) == 0) return;
+    if (!mapWalletViews.contains(wallet_model)) return;
 
     WalletView *walletView = mapWalletViews.take(wallet_model);
     walletStack->removeWidget(walletView);
